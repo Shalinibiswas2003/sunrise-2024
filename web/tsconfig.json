@@ -8,12 +8,13 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",  // Use 'node' for module resolution
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
     "types": ["jest"],
+    "typeRoots": ["node_modules/@types"],
     "paths": {
       "@/*": ["./src/*"]
     }
