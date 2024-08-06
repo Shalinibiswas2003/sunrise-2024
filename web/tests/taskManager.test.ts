@@ -1,6 +1,6 @@
 // tests/taskManager.test.ts
 
-import { initializeTasks, getActiveTasks, completeTask, getCompletedTasks, getAllTasks, createTask, updateTask, deleteTask } from "@/modules/taskManager";
+import { completeTask, createTask, deleteTask, getActiveTasks, getAllTasks, getCompletedTasks, initializeTasks, updateTask } from "@/modules/taskManager";
 
 
 
