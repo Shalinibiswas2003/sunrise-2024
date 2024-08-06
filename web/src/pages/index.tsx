@@ -42,9 +42,9 @@ export default function Home() {
     }
   };
 
- 
 
-  
+
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormValues(prevValues => ({ ...prevValues, [name]: value }));
@@ -177,7 +177,7 @@ export default function Home() {
           </Grid>
         </Grid>
 
-      
+
         <Snackbar
           open={notification.open}
           autoHideDuration={6000}
@@ -190,6 +190,4 @@ export default function Home() {
           }
         />
       </Container>
-    </Paper>
-  );
-}
+    </Paper>)}

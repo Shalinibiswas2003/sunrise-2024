@@ -5,29 +5,52 @@ let tasks: Task[] = [...initialTasks];
 
 // Initialize the tasks
 export function initializeTasks(): void {
-    // Reset tasks to initial state
-    
-    // Ensure tasks are properly initialized with correct active and in-progress status
-    tasks.forEach((task) => {
-        task.completed = false;
-        task.inProgress = false;
-        task.active = false;
+    tasks = [...initialTasks];
+    tasks.forEach(task => {
+        if (task.completed) {
+            task.inProgress = false;
+            task.active = false;
+        }
     });
+    activateTasks();
+}
 
-    // Activate the first two tasks
-    if (tasks.length > 0) {
-        tasks[0].inProgress = true;
-        tasks[0].active = true;
-    }
-    if (tasks.length > 1) {
-        tasks[1].inProgress = true;
-        tasks[1].active = true;
-    }
+// Activate tasks based on the absence of previous groups and current group's status
+function activateTasks(): void {
+    const groups = [...new Set(tasks.map(task => task.group))].sort((a, b) => a - b);
+
+    groups.forEach(group => {
+        const currentGroupTasks = tasks.filter(t => t.group === group);
+        const previousGroupTasks = tasks.filter(t => t.group === group - 1);
+
+        // If the previous group does not exist or all tasks in the previous group are complete
+        const allPreviousGroupTasksCompleted = previousGroupTasks.length === 0 || 
+            previousGroupTasks.every(t => t.completed);
+
+        if (allPreviousGroupTasksCompleted) {
+            // Set the first two tasks to inProgress and active if they are not completed
+            currentGroupTasks.slice(0, 2).forEach(task => {
+                if (!task.completed) {
+                    task.inProgress = true;
+                    task.active = true;
+                }
+            });
+        }
+    });
 }
 
 // Get active tasks
-export function getActiveTasks(): Task[] {
-    return tasks.filter(task => task.active && !task.completed);
+export function getActiveTasks(): Omit<Task, 'active' | 'inProgress'>[] {
+    return tasks
+      .filter(task => !task.completed && task.active)
+      .map(({ id, title, description, persona, group, completed }) => ({
+        id,
+        title,
+        description,
+        persona,
+        group,
+        completed
+      }));
 }
 
 // Get in-progress tasks
@@ -55,9 +78,12 @@ export function createTask(title: string, description: string, persona: string, 
         persona, 
         group, 
         completed: false, 
-        inProgress: false, 
+        inProgress: group === 1, 
         active: group === 1
     });
+
+    // Automatically handle task activation
+    activateTasks();
 }
 
 // Update a task
@@ -65,6 +91,8 @@ export function updateTask(taskId: number, updatedTask: Partial<Omit<Task, 'id'>
     const taskInd = tasks.findIndex(t => t.id === taskId);
     if (taskInd !== -1) {
         tasks[taskInd] = { ...tasks[taskInd], ...updatedTask };
+        // Re-activate tasks if necessary
+        activateTasks();
     }
 }
 
@@ -117,18 +145,22 @@ export function completeTask(taskTitle: string): void {
 
 // Move the next available task to in-progress
 function moveNextTaskToInProgress(task: Task): void {
-    const currentGroupTasks = tasks.filter(t => t.group === task.group);
-    const nextGroupTasks = tasks.filter(t => t.group === task.group + 1);
+    const currentGroupTasks = tasks.filter(t => t.group === task.group && !t.completed);
+    const nextGroupTasks = tasks.filter(t => t.group === task.group + 1 && !t.completed);
 
-    // Find the next task to move to in-progress
-    const nextToDoTask = getToDoTasks().find(t => t.group === task.group || t.group === task.group + 1);
+    // Find the next task to move to in-progress within the same group
+    const nextToDoTask = currentGroupTasks.find(t => !t.inProgress) || nextGroupTasks.find(t => !t.inProgress);
 
     if (nextToDoTask) {
-        tasks = tasks.map(t =>
-            t.id === nextToDoTask.id
-                ? { ...t, inProgress: true, active: (t.group === task.group || currentGroupTasks.every(t => t.completed)) }
-                : t
-        );
+        nextToDoTask.inProgress = true;
+        
+        // Set the task to active only if it is from the same group or all tasks in the current group are completed
+        const currentGroupTasksRemaining = tasks.filter(t => t.group === task.group && !t.completed);
+        if (nextToDoTask.group === task.group || currentGroupTasksRemaining.length === 0) {
+            nextToDoTask.active = true;
+        } else {
+            nextToDoTask.active = false;
+        }
     }
 }
 
